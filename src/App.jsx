@@ -1,7 +1,7 @@
 import React, { useEffect, useMemo, useRef, useState } from 'react'
 
 /** 78 cartas: generadas (Mayores + Menores) */
-function useTarot() {
+function buildTarot() {
   const majors = [
     ["0","El Loco","Nuevos comienzos; fe. Invertida: imprudencia."],
     ["I","El Mago","Voluntad y acción. Invertida: manipulación."],
@@ -117,7 +117,7 @@ function useThumbIndex(TAROT){
       if(!cancelled) setIndex(out);
     })();
     return ()=>{cancelled=true}
-  }, []);
+  }, [TAROT]);
   return index;
 }
 
@@ -150,7 +150,7 @@ function CameraScanner({ onRecognized, onSnapshot }){
       {error && <p className="muted">{error}</p>}
       <div style={{display:'grid', gap:12}}>
         <video ref={videoRef} playsInline muted style={{width:'100%', borderRadius:16, border:'1px solid rgba(255,255,255,.2)'}} />
-        <div className="btn" onClick={takePhoto} style={{justifySelf:'start'}} disabled={!ready}>Capturar</div>
+        <button className="btn" onClick={takePhoto} disabled={!ready}>Capturar</button>
         <canvas ref={canvasRef} style={{display:'none'}} />
       </div>
     </div>
@@ -227,8 +227,8 @@ function Lecturas({ TAROT }){
           <select className="select" value={spreadKey} onChange={e=>setSpreadKey(e.target.value)}>
             {Object.keys(spreads).map(k=> <option key={k} value={k}>{spreads[k].nombre}</option>)}
           </select>
-          <div className="btn secondary" onClick={clear}>Reiniciar</div>
-          <div className="btn" onClick={save}>Guardar en historial</div>
+          <button className="btn secondary" onClick={clear}>Reiniciar</button>
+          <button className="btn" onClick={save}>Guardar en historial</button>
         </div>
       </div>
       <div className="card">
@@ -237,7 +237,9 @@ function Lecturas({ TAROT }){
           {sp.posiciones.map(p=> (
             <div key={p.id} style={{display:'grid', gap:8}}>
               <div className="reading-card">
-                {seleccion[p.id] ? <img src={svgCard(TAROT.find(c=>c.id===seleccion[p.id])?.nombre||'Carta')} alt="carta" style={{width:'100%',height:'100%',objectFit:'cover',borderRadius:10}}/> : p.id}
+                {seleccion[p.id]
+                  ? <img src={svgCard(TAROT.find(c=>c.id===seleccion[p.id])?.nombre||'Carta')} alt="carta" style={{width:'100%',height:'100%',objectFit:'cover',borderRadius:10}}/>
+                  : p.id}
               </div>
               <div style={{fontWeight:700}}>{p.titulo}</div>
               <div className="muted" style={{fontSize:12}}>{p.desc}</div>
@@ -257,7 +259,7 @@ function Biblioteca({ TAROT }){
   const grupos = useMemo(()=>({
     'Mayor': TAROT.filter(c=>c.grupo==='Mayor'),
     'Menor': TAROT.filter(c=>c.grupo==='Menor'),
-  }), [])
+  }), [TAROT])
   return (
     <div className="grid">
       {Object.entries(grupos).map(([g, list]) => (
@@ -278,14 +280,16 @@ function Biblioteca({ TAROT }){
   )
 }
 
-function Historial(){
+function Historial({ TAROT }){
   const [items, setItems] = useState(()=> JSON.parse(localStorage.getItem('historial')||'[]'))
   const clear = ()=>{ localStorage.removeItem('historial'); setItems([]) }
+  const nameById = (id)=> (TAROT.find(c=>c.id===id)?.nombre || 'Carta')
+
   return (
     <div className="grid">
       <div className="card">
         <div className="title">Historial de tiradas</div>
-        <div className="row"><div className="btn secondary" onClick={clear}>Borrar historial</div></div>
+        <div className="row"><button className="btn secondary" onClick={clear}>Borrar historial</button></div>
       </div>
       {items.length===0 ? (
         <div className="card"><div className="subtitle">No hay tiradas guardadas aún.</div></div>
@@ -294,28 +298,21 @@ function Historial(){
           <div className="subtitle">{new Date(e.fecha).toLocaleString()}</div>
           <div><strong>Tirada:</strong> {e.spread}</div>
           <div className="row">
-            {Object.entries(e.seleccion).map(([pos, cid])=> {
-              const name = cid ? svgCard(nameById(cid)) : ''
-              return (
-                <div key={pos} style={{display:'grid', gap:6}}>
-                  <img src={svgCard(nameById(cid))} style={{width:72, height:108, borderRadius:8, border:'1px solid rgba(255,255,255,.2)'}}/>
-                  <div className="muted" style={{fontSize:12}}>Pos {pos}</div>
-                </div>
-              )
-            })}
+            {Object.entries(e.seleccion).map(([pos, cid])=> (
+              <div key={pos} style={{display:'grid', gap:6}}>
+                <img src={svgCard(nameById(cid))} style={{width:72, height:108, borderRadius:8, border:'1px solid rgba(255,255,255,.2)'}}/>
+                <div className="muted" style={{fontSize:12}}>Pos {pos}</div>
+              </div>
+            ))}
           </div>
         </div>
       ))}
     </div>
   )
-  function nameById(id){
-    const TAROT = useTarot()
-    return TAROT.find(c=>c.id===id)?.nombre || 'Carta'
-  }
 }
 
 export default function App({ defaultTheme='violeta' }){
-  const TAROT = useTarot()
+  const TAROT = useMemo(buildTarot, [])        // ✅ build once
   const [tab, setTab] = useState('scan')
   const [theme, setTheme] = useState(defaultTheme)
   const [blob, setBlob] = useState(null)
@@ -327,9 +324,11 @@ export default function App({ defaultTheme='violeta' }){
     if(!newBlob || !index) return
     const vec = await imgToVec(newBlob)
     let best = [null, Infinity]
-    for(const [id, v] of index){ const d = (()=>{
-      let s=0; for(let i=0;i<v.length;i++){ const dd=vec[i]-v[i]; s+=dd*dd } return Math.sqrt(s);
-    })(); if(d < best[1]) best = [id, d] }
+    for(const [id, v] of index){ 
+      let s=0; for(let i=0;i<v.length;i++){ const d=vec[i]-v[i]; s+=d*d }
+      const d = Math.sqrt(s)
+      if(d < best[1]) best = [id, d]
+    }
     setGuess(best[0])
   }
 
@@ -353,7 +352,7 @@ export default function App({ defaultTheme='violeta' }){
         </>)}
         {tab==='lecturas' && (<Lecturas TAROT={TAROT} />)}
         {tab==='biblioteca' && (<Biblioteca TAROT={TAROT} />)}
-        {tab==='historial' && (<Historial />)}
+        {tab==='historial' && (<Historial TAROT={TAROT} />)}
       </main>
 
       <footer className="frame muted">PWA para iPhone: Safari → Compartir → “Añadir a pantalla de inicio”.</footer>
