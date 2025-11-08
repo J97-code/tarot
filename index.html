@@ -1,0 +1,65 @@
+<!doctype html>
+<html lang="es">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+    <link rel="manifest" href="/manifest.json" />
+    <!-- iOS PWA helpers -->
+    <meta name="apple-mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+    <meta name="apple-mobile-web-app-title" content="Tarot Ultra" />
+    <title>Tarot Ultra</title>
+    <style>
+      :root{ --bg:#07070e; --fg:#fff; --muted:#b7b7c6; --accent:#a78bfa; --accent2:#f6c453; }
+      html[data-theme='violeta']{ --accent:#a78bfa; --accent2:#f472b6; }
+      html[data-theme='oro']{ --accent:#f2cd5e; --accent2:#f6a40f; }
+      html[data-theme='oscuro']{ --accent:#7dd3fc; --accent2:#22d3ee; }
+      html,body{height:100%}
+      body{margin:0;color:var(--fg);background:var(--bg);font-family:-apple-system,BlinkMacSystemFont,Segoe UI,Roboto,Inter,Helvetica,Arial}
+      .frame{max-width:980px;margin:0 auto;padding:env(safe-area-inset-top) 16px 24px}
+      .header{position:sticky;top:0;z-index:12;backdrop-filter:blur(8px);background:rgba(7,7,14,.6);border-bottom:1px solid rgba(255,255,255,.08)}
+      .brand{display:flex;align-items:center;gap:10px;padding:12px 8px}
+      .badge{width:36px;height:36px;display:grid;place-items:center;border-radius:14px;background:radial-gradient(35% 40% at 30% 30%,#fff 0%,#fff0 100%),linear-gradient(135deg,var(--accent),var(--accent2));box-shadow:0 10px 24px rgba(0,0,0,.35), inset 0 0 24px rgba(255,255,255,.2)}
+      .nav{display:flex;gap:8px;flex-wrap:wrap;padding:8px}
+      .nav a{color:var(--fg);text-decoration:none;font-weight:600;padding:8px 12px;border-radius:10px;border:1px solid rgba(255,255,255,.14)}
+      .nav a.active{background:linear-gradient(135deg,var(--accent),var(--accent2));border-color:transparent}
+      .grid{display:grid;gap:16px}
+      .two{display:grid;gap:16px;grid-template-columns:1fr} @media(min-width:880px){.two{grid-template-columns:1fr 1fr}}
+      .card{background:linear-gradient(180deg,rgba(255,255,255,.06),rgba(255,255,255,.02));border:1px solid rgba(255,255,255,.1);border-radius:18px;padding:16px;box-shadow:0 12px 30px rgba(0,0,0,.30)}
+      .title{font-weight:800;font-size:18px;letter-spacing:.2px}
+      .subtitle{font-weight:600;font-size:14px;color:var(--muted)}
+      .btn{background:linear-gradient(135deg,var(--accent),var(--accent2));border:none;color:var(--fg);padding:12px 14px;border-radius:12px;display:inline-flex;align-items:center;gap:8px;font-weight:700}
+      .btn.secondary{background:transparent;color:var(--fg);border:1px solid rgba(255,255,255,.2)}
+      .select,.input,textarea{width:100%;padding:10px 12px;border-radius:12px;border:1px solid rgba(255,255,255,.2);background:rgba(0,0,0,.3);color:var(--fg)}
+      .muted{color:var(--muted)}
+      .img-card{width:100%;max-width:360px;aspect-ratio:2/3;object-fit:cover;border-radius:16px;border:1px solid rgba(255,255,255,.2)}
+      .reading-card{width:100px;height:150px;border-radius:10px;border:1px dashed rgba(255,255,255,.3);display:grid;place-items:center;color:#aaa}
+      .row{display:flex;gap:10px;flex-wrap:wrap}
+      .history-item{display:grid;gap:6px;padding:10px;border-radius:12px;border:1px solid rgba(255,255,255,.14)}
+      #particles{position:fixed;inset:0;pointer-events:none}
+      .theme-switch{margin-left:auto;display:flex;gap:8px}
+      .theme-switch button{border:1px solid rgba(255,255,255,.2);background:transparent;color:var(--fg);padding:6px 10px;border-radius:10px}
+      .theme-switch .active{background:linear-gradient(135deg,var(--accent),var(--accent2));border:0}
+    </style>
+  </head>
+  <body>
+    <canvas id="particles"></canvas>
+    <div id="root"></div>
+    <script type="module" src="/src/main.jsx"></script>
+    <script>
+      // Simple star particles
+      const c = document.getElementById('particles');
+      const x = c.getContext('2d');
+      function resize(){ c.width = innerWidth; c.height = innerHeight }
+      addEventListener('resize', resize); resize();
+      const S = Array.from({length: 140}, ()=>({ x: Math.random()*c.width, y: Math.random()*c.height, r: Math.random()*1.7+0.3, s: Math.random()*0.6+0.2 }));
+      function step(){
+        x.clearRect(0,0,c.width,c.height);
+        x.fillStyle = 'rgba(255,255,255,.85)';
+        for(const s of S){ s.y += s.s; if(s.y>c.height) s.y= -5; x.beginPath(); x.arc(s.x, s.y, s.r, 0, Math.PI*2); x.fill(); }
+        requestAnimationFrame(step);
+      }
+      step();
+    </script>
+  </body>
+</html>
