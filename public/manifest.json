@@ -1,0 +1,9 @@
+{
+  "name": "Tarot Ultra",
+  "short_name": "Tarot",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#07070e",
+  "theme_color": "#a78bfa",
+  "icons": []
+}
